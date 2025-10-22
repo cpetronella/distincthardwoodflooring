@@ -4,147 +4,178 @@
 <meta charset="UTF-8">
 <title>Distinct Hardwood Flooring</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-image: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80');
-    background-size: cover;
-    background-attachment: fixed;
-    color: #fff;
-  }
-  header {
-    background-color: rgba(0,0,0,0.6);
-    padding: 20px;
-    text-align: center;
-  }
-  .logo {
-    width: 200px;
-    height: auto;
-  }
-  section {
-    padding: 40px;
-    text-align: center;
-    background-color: rgba(0,0,0,0.5);
-    margin: 20px;
-    border-radius: 8px;
-  }
-  .carousel {
-    position: relative;
-    width: 100%;
-    max-width: 800px;
-    margin: auto;
-    overflow: hidden;
-  }
-  .carousel-item {
-    display: none;
-  }
-  .carousel-item.active {
-    display: block;
-  }
-  .carousel .prev, .carousel .next {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background-color: rgba(0,0,0,0.5);
-    color: white;
-    border: none;
-    padding: 10px;
-    cursor: pointer;
-    border-radius: 50%;
-  }
-  .carousel .prev { left: 10px; }
-  .carousel .next { right: 10px; }
-  .contact a {
-    display: inline-block;
-    margin: 10px;
-    padding: 10px 20px;
-    background-color: #333;
-    color: white;
-    border-radius: 5px;
-    text-decoration: none;
-  }
-  iframe.insta {
-    width: 100%;
-    height: 500px;
-    border: none;
-  }
-  form {
-    max-width: 500px;
-    margin: 0 auto;
-    text-align: left;
-  }
-  form input, form textarea {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
-  }
-  form button {
-    padding: 10px 20px;
-    background-color: #333;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
+body {
+ font-family: Arial, sans-serif;
+ margin: 0;
+ padding: 0;
+ background-image: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80');
+ background-size: cover;
+ background-attachment: fixed;
+ color: #fff;
+}
+header {
+ background-color: rgba(0,0,0,0.6);
+ padding: 20px;
+ text-align: center;
+}
+.logo {
+ width: 200px;
+ height: auto;
+}
+nav {
+ margin-top: 10px;
+}
+nav a {
+ margin: 0 10px;
+ color: #fff;
+ text-decoration: none;
+ font-weight: bold;
+}
+.gallery {
+ position: relative;
+ max-width: 800px;
+ margin: 40px auto;
+}
+.slide {
+ display: none;
+}
+.slide iframe {
+ width: 100%;
+ height: 480px;
+ border: none;
+}
+.prev, .next {
+ cursor: pointer;
+ position: absolute;
+ top: 50%;
+ width: auto;
+ margin-top: -22px;
+ padding: 16px;
+ color: white;
+ font-weight: bold;
+ font-size: 24px;
+ transition: 0.6s ease;
+ border-radius: 0 3px 3px 0;
+ user-select: none;
+ background-color: rgba(0,0,0,0.5);
+}
+.next {
+ right: 0;
+ border-radius: 3px 0 0 3px;
+}
+.prev:hover, .next:hover {
+ background-color: rgba(0,0,0,0.8);
+}
+.contact {
+ background-color: rgba(0,0,0,0.6);
+ padding: 20px;
+ text-align: center;
+}
+.contact a.button {
+ display: inline-block;
+ margin: 10px;
+ padding: 10px 20px;
+ background-color: #444;
+ color: #fff;
+ text-decoration: none;
+ border-radius: 4px;
+}
+.contact a.button:hover {
+ background-color: #666;
+}
+form {
+ max-width: 600px;
+ margin: 0 auto;
+ display: flex;
+ flex-direction: column;
+}
+form input, form textarea {
+ margin: 10px 0;
+ padding: 10px;
+ border-radius: 4px;
+ border: 1px solid #ccc;
+}
+form button {
+ padding: 10px;
+ background-color: #444;
+ color: #fff;
+ border: none;
+ border-radius: 4px;
+ cursor: pointer;
+}
+form button:hover {
+ background-color: #666;
+}
+footer {
+ background-color: rgba(0,0,0,0.6);
+ text-align: center;
+ padding: 10px;
+ margin-top: 20px;
+}
 </style>
 </head>
 <body>
+
 <header>
-  <!-- Placeholder logo; replace with your own file or URL -->
-  <img class="logo" src="https://via.placeholder.com/200" alt="Distinct Hardwood Flooring Logo">
-  <h1>Distinct Hardwood Flooring</h1>
-  <p>Residential, Commercial, Gymnasiums & More<br>Custom Installations, Sanding & Finishing</p>
+ <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAIAAAADnC86AAAAA3NCSVQICAjb4U/gAAAAX3pUWHRSYXcgcHJvZmlsZSB0eXBlIEFQUDEAAAiZ40pPzUstykxWKCjKT8vMSeVSAANjEy4TSxNLo0QDAwMLAwgwNDAwNgSSRkC2OVQo0QAFmBqYWZoZmxmaAzGIzwUASLYUyTrUQzIAAAP9SURBVFiF7ZbPTxtXEMdnl/VvW/5VRGs4pMqC4GAhIUSSC4i/Ij1ya64cmkNzSc9Nc2wOpAdOBXFKD41IkBFrU8BrZBsXhL3GxvgXNsZg4117d593etgo/QWJFFVNDv4eVrPz5s1n37x5u0shInwM0R+F2gP3wD1wD9wD/1fgbrfLcdzBwQEAJJNJAIjFYvv7+7VaLRgKBYNBURQvLi4EQQCAVCoFAIIgrK2tybIcCATW19dFUfwQsCRJgiBUq9W9vb0XL34BgG8fPepjGK/Xu7O9zbJsqVQ6OTl59er18+c/BQKBer3OcZzf72cYxm63S5JktVo/BAwAiKhpSFEUogYA3z1+PDc3R1GU2+Pp7+/XNA0RAfDevbs/PH3KMIwsy51Op9vter1et9tNUdS7Ut8kQkgoFEomk4iYPT5GxFgsdnR0hIjFYhERJUlqNpu5XA4Rs5ksIubz+e3tbURstVq1Wu0dyan3/giUy+VGo1Eulz0ej6qqBoPBarNlMpkvb92qVCoDA58DYLVaJYT4fL5SufyZ1wsAPp/P4/G8p5g3qdls8jzfbrfT6XShUEDEcDiMiGdnZ/qKE4mEHplI/I6Im5uburNer5/VapFIRN+La3U9WNO03d3dfD6PiDzPS5KEiBsbG/rozs6ObkSjUd2Ix+OIKMsyH4kgYj5fODw81B9CEIRrEcy/a5BOp1VVnZiYIIQsLCzMzMyUSqVCoTA9Pa0HZDJZl8uFAIqi6B6Xy6UoitFoZG/fTqfTLMvKshwOh6empmRZ5nl+ZGTE6XT+lfK3PRZFcXl5eXJy0m63dzodmqZHR0cBIJvN5vN5n8+naVqxWJydndXjOS44PMwiIk3Tr9fW7t65g4iNRsNisRgMBqCora2tr+7fN5vN5XK5Vqv5/f5rwIQQhnlTgE6nYzab2+22xWIhhNA0TdO07tRXJoqizWZTVbXdbhNCTCaTzWbThwBA0zT9yjDM8fFxs9m0Wq3n5+eDg4NDQ0M64s05VlX1m4cPAeDrBw8AYH5+XpKkpaXlXC63uLj447NnlUrl56UlWZZXVlZSqVQwFOJ53mAwxGKxdrudSCQA4NeXLyO7uxsbHMdx0Wh0dXU1Ho8PDAx8/+QJy7Icx5lMpnh8jxDyZ1drmiZJUrfbJYQoitLpdBDx4uICEVVVJYS8vW02m4h4eXmpT1RVFRFbrZaiKHoPqoQoiqKn6na7iKgoytuJ/2wuiqIsFotu9/X1AUAoFHI4HPrB1V+5NE0LgmA0GsfHx0VRdDqdwWBweHj46uqKZdnNzd98vi/sdrssyw6H4/T01O12ZzIZp9M5NjYGAA6H48bm+j/1SX4We+AeuAfugXvgTwP8B/50WFC5B5x1AAAAAElFTkSuQmCC" alt="Distinct Hardwood Flooring logo" class="logo">
+ <h1>Distinct Hardwood Flooring</h1>
+ <p>Quality Flooring, Distinct Style</p>
 </header>
-<section>
-  <h2>Gallery</h2>
-  <div class="carousel">
-    <div class="carousel-item active"><iframe class="insta" src="https://www.instagram.com/p/DMimF_NgAaA/embed" allowtransparency="true"></iframe></div>
-    <div class="carousel-item"><iframe class="insta" src="https://www.instagram.com/p/DMgTPv6RMa_/embed" allowtransparency="true"></iframe></div>
-    <div class="carousel-item"><iframe class="insta" src="https://www.instagram.com/p/DGjAdfGxt8u/embed" allowtransparency="true"></iframe></div>
-    <button class="prev">&#8249;</button>
-    <button class="next">&#8250;</button>
-  </div>
+
+<section class="gallery">
+ <div class="slide">
+   <iframe src="https://www.instagram.com/p/DMimF_NgAaA/embed" allowtransparency="true" allowfullscreen></iframe>
+ </div>
+ <div class="slide">
+   <iframe src="https://www.instagram.com/p/DMgTPv6RMa_/embed" allowtransparency="true" allowfullscreen></iframe>
+ </div>
+ <div class="slide">
+   <iframe src="https://www.instagram.com/p/DGjAdfGxt8u/embed" allowtransparency="true" allowfullscreen></iframe>
+ </div>
+
+ <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
+ <a class="next" onclick="plusSlides(1)">&#10095;</a>
 </section>
+
 <section class="contact">
-  <h2>Contact Us</h2>
-  <p>Call or text us for an estimate!</p>
-  <a href="tel:9178870192">Call Now</a>
-  <a href="sms:9178870192">Text Us</a>
-  <a href="mailto:jerrydistinct@gmail.com?subject=Estimate%20Request">Schedule an Estimate</a>
+ <h2>Get in Touch</h2>
+ <a href="tel:9178870192" class="button">Call Now</a>
+ <a href="sms:9178870192" class="button">Text Us</a>
+ <a href="mailto:jerrydistinct@gmail.com?subject=Estimate%20Request" class="button">Schedule an Estimate</a>
 </section>
-<section id="schedule">
-  <h2>Schedule an Estimate</h2>
-  <p>Fill out the form below to request a free estimate, and we'll get back to you as soon as possible.</p>
-  <form>
-    <label>Name<br><input type="text" name="name" required></label><br>
-    <label>Email<br><input type="email" name="email" required></label><br>
-    <label>Phone<br><input type="tel" name="phone"></label><br>
-    <label>Preferred Date<br><input type="date" name="date"></label><br>
-    <label>Project Details<br><textarea name="details" rows="5"></textarea></label><br>
-    <button type="submit">Submit</button>
-  </form>
+
+<section id="schedule" class="contact">
+ <h2>Request a Free Estimate</h2>
+ <form>
+   <input type="text" placeholder="Your Name">
+   <input type="email" placeholder="Your Email">
+   <input type="tel" placeholder="Your Phone">
+   <textarea placeholder="Project Details"></textarea>
+   <button type="submit">Submit</button>
+ </form>
 </section>
-<footer style="text-align:center; padding:20px; background-color:rgba(0,0,0,0.6);">
-  <p>&copy; 2025 Distinct Hardwood Flooring</p>
+
+<footer>
+ <p>&copy; 2025 Distinct Hardwood Flooring. All rights reserved.</p>
 </footer>
+
 <script>
-let currentIndex = 0;
-const items = document.querySelectorAll('.carousel-item');
-const total = items.length;
-function showItem(idx) {
-  items.forEach((item, i) => {
-    item.classList.toggle('active', i === idx);
-  });
+var slideIndex = 0;
+showSlides(slideIndex);
+function plusSlides(n) {
+  showSlides(slideIndex += n);
 }
-document.querySelector('.carousel .next').addEventListener('click', () => {
-  currentIndex = (currentIndex + 1) % total;
-  showItem(currentIndex);
-});
-document.querySelector('.carousel .prev').addEventListener('click', () => {
-  currentIndex = (currentIndex - 1 + total) % total;
-  showItem(currentIndex);
-});
+function showSlides(n) {
+  var i;
+  var slides = document.getElementsByClassName("slide");
+  if (n >= slides.length) {slideIndex = 0}
+  if (n < 0) {slideIndex = slides.length - 1}
+  for (i = 0; i < slides.length; i++) {
+    slides[i].style.display = "none";
+  }
+  slides[slideIndex].style.display = "block";
+}
 </script>
+
 </body>
 </html>
