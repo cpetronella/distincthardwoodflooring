@@ -3,9 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <title>Distinct Hardwood Flooring</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+  header { background-color: #f5f5f5; padding: 20px; text-align: center; }
+  .logo { width: 200px; height: auto; }
+  nav { background-color: #333; color: white; padding: 10px; text-align: center; }
+  nav a { color: white; margin: 0 15px; text-decoration: none; }
+  section { padding: 40px; }
+  .gallery { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .gallery img { width: 30%; height: auto; }
+  .contact { text-align: center; }
+  .contact a { display: inline-block; margin: 10px; padding: 10px 20px; background-color: #333; color: white; border-radius: 5px; text-decoration: none; }
+  form { max-width: 500px; margin: 0 auto; text-align: left; }
+  form input, form textarea { width: 100%; padding: 10px; margin-bottom: 10px; }
+  form button { padding: 10px 20px; background-color: #333; color: white; border: none; border-radius: 5px; cursor: pointer; }
+</style>
 </head>
 <body>
-<h1>Welcome to Distinct Hardwood Flooring</h1>
-<p>Our website is under construction. Stay tuned!</p>
+<header>
+  <!-- Replace src with the logo image URL from Instagram if available -->
+  <img class="logo" src="https://via.placeholder.com/200" alt="Distinct Hardwood Flooring Logo">
+  <h1>Distinct Hardwood Flooring</h1>
+  <p>Residential, Commercial, Gymnasiums &amp; More<br>Custom Installations, Sanding &amp; Finishing</p>
+</header>
+<section>
+  <h2>Gallery</h2>
+  <div class="gallery">
+    <!-- Replace src attributes with image URLs from Instagram -->
+    <img src="https://via.placeholder.com/400x300" alt="Project photo 1">
+    <img src="https://via.placeholder.com/400x300" alt="Project photo 2">
+    <img src="https://via.placeholder.com/400x300" alt="Project photo 3">
+  </div>
+</section>
+<section class="contact">
+  <h2>Contact Us</h2>
+  <p>Call or text us for an estimate!</p>
+  <!-- Replace PHONE_NUMBER_HERE with the actual phone number once confirmed -->
+  <a href="tel:PHONE_NUMBER_HERE">Call Now</a>
+  <a href="sms:PHONE_NUMBER_HERE">Text Us</a>
+  <a href="#schedule">Schedule an Estimate</a>
+</section>
+<section id="schedule">
+  <h2>Schedule an Estimate</h2>
+  <p>Fill out the form below to request a free estimate, and we'll get back to you as soon as possible.</p>
+  <form>
+    <label>Name<br><input type="text" name="name" required></label><br>
+    <label>Email<br><input type="email" name="email" required></label><br>
+    <label>Phone<br><input type="tel" name="phone"></label><br>
+    <label>Preferred Date<br><input type="date" name="date"></label><br>
+    <label>Project Details<br><textarea name="details" rows="5"></textarea></label><br>
+    <button type="submit">Submit</button>
+  </form>
+</section>
+<footer style="text-align:center; padding:20px; background-color:#f5f5f5;">
+  <p>&copy; 2025 Distinct Hardwood Flooring</p>
+</footer>
 </body>
 </html>
