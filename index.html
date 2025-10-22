@@ -4,27 +4,94 @@
 <meta charset="UTF-8">
 <title>Distinct Hardwood Flooring</title>
 <style>
-  body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-  header { background-color: #f5f5f5; padding: 20px; text-align: center; }
-  .logo { width: 200px; height: auto; }
-  nav { background-color: #333; color: white; padding: 10px; text-align: center; }
-  nav a { color: white; margin: 0 15px; text-decoration: none; }
-  section { padding: 40px; text-align: center; }
-  .carousel { position: relative; width: 100%; max-width: 800px; margin: auto; overflow: hidden; }
-  .carousel-image { display: none; width: 100%; height: auto; }
-  .carousel-image.active { display: block; }
-  .carousel .prev, .carousel .next { position: absolute; top: 50%; transform: translateY(-50%); background-color: rgba(0,0,0,0.5); color: white; border: none; padding: 10px; cursor: pointer; border-radius: 50%; }
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-image: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80');
+    background-size: cover;
+    background-attachment: fixed;
+    color: #fff;
+  }
+  header {
+    background-color: rgba(0,0,0,0.6);
+    padding: 20px;
+    text-align: center;
+  }
+  .logo {
+    width: 200px;
+    height: auto;
+  }
+  section {
+    padding: 40px;
+    text-align: center;
+    background-color: rgba(0,0,0,0.5);
+    margin: 20px;
+    border-radius: 8px;
+  }
+  .carousel {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    margin: auto;
+    overflow: hidden;
+  }
+  .carousel-item {
+    display: none;
+  }
+  .carousel-item.active {
+    display: block;
+  }
+  .carousel .prev, .carousel .next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 50%;
+  }
   .carousel .prev { left: 10px; }
   .carousel .next { right: 10px; }
-  .contact a { display: inline-block; margin: 10px; padding: 10px 20px; background-color: #333; color: white; border-radius: 5px; text-decoration: none; }
-  form { max-width: 500px; margin: 0 auto; text-align: left; }
-  form input, form textarea { width: 100%; padding: 10px; margin-bottom: 10px; }
-  form button { padding: 10px 20px; background-color: #333; color: white; border: none; border-radius: 5px; cursor: pointer; }
+  .contact a {
+    display: inline-block;
+    margin: 10px;
+    padding: 10px 20px;
+    background-color: #333;
+    color: white;
+    border-radius: 5px;
+    text-decoration: none;
+  }
+  iframe.insta {
+    width: 100%;
+    height: 500px;
+    border: none;
+  }
+  form {
+    max-width: 500px;
+    margin: 0 auto;
+    text-align: left;
+  }
+  form input, form textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+  form button {
+    padding: 10px 20px;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
 <header>
-  <!-- Replace src with your logo image URL -->
+  <!-- Placeholder logo; replace with your own file or URL -->
   <img class="logo" src="https://via.placeholder.com/200" alt="Distinct Hardwood Flooring Logo">
   <h1>Distinct Hardwood Flooring</h1>
   <p>Residential, Commercial, Gymnasiums & More<br>Custom Installations, Sanding & Finishing</p>
@@ -32,10 +99,9 @@
 <section>
   <h2>Gallery</h2>
   <div class="carousel">
-    <!-- Replace src attributes with direct Instagram image URLs -->
-    <img src="https://via.placeholder.com/800x400?text=Project+1" class="carousel-image active" alt="Project photo 1">
-    <img src="https://via.placeholder.com/800x400?text=Project+2" class="carousel-image" alt="Project photo 2">
-    <img src="https://via.placeholder.com/800x400?text=Project+3" class="carousel-image" alt="Project photo 3">
+    <div class="carousel-item active"><iframe class="insta" src="https://www.instagram.com/p/DMimF_NgAaA/embed" allowtransparency="true"></iframe></div>
+    <div class="carousel-item"><iframe class="insta" src="https://www.instagram.com/p/DMgTPv6RMa_/embed" allowtransparency="true"></iframe></div>
+    <div class="carousel-item"><iframe class="insta" src="https://www.instagram.com/p/DGjAdfGxt8u/embed" allowtransparency="true"></iframe></div>
     <button class="prev">&#8249;</button>
     <button class="next">&#8250;</button>
   </div>
@@ -45,7 +111,7 @@
   <p>Call or text us for an estimate!</p>
   <a href="tel:9178870192">Call Now</a>
   <a href="sms:9178870192">Text Us</a>
-  <a href="#schedule">Schedule an Estimate</a>
+  <a href="mailto:jerrydistinct@gmail.com?subject=Estimate%20Request">Schedule an Estimate</a>
 </section>
 <section id="schedule">
   <h2>Schedule an Estimate</h2>
@@ -59,25 +125,25 @@
     <button type="submit">Submit</button>
   </form>
 </section>
-<footer style="text-align:center; padding:20px; background-color:#f5f5f5;">
+<footer style="text-align:center; padding:20px; background-color:rgba(0,0,0,0.6);">
   <p>&copy; 2025 Distinct Hardwood Flooring</p>
 </footer>
 <script>
-let carouselIndex = 0;
-const images = document.querySelectorAll('.carousel-image');
-const totalImages = images.length;
-function showImage(index) {
-  images.forEach((img, i) => {
-    img.classList.toggle('active', i === index);
+let currentIndex = 0;
+const items = document.querySelectorAll('.carousel-item');
+const total = items.length;
+function showItem(idx) {
+  items.forEach((item, i) => {
+    item.classList.toggle('active', i === idx);
   });
 }
 document.querySelector('.carousel .next').addEventListener('click', () => {
-  carouselIndex = (carouselIndex + 1) % totalImages;
-  showImage(carouselIndex);
+  currentIndex = (currentIndex + 1) % total;
+  showItem(currentIndex);
 });
 document.querySelector('.carousel .prev').addEventListener('click', () => {
-  carouselIndex = (carouselIndex - 1 + totalImages) % totalImages;
-  showImage(carouselIndex);
+  currentIndex = (currentIndex - 1 + total) % total;
+  showItem(currentIndex);
 });
 </script>
 </body>
