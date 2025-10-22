@@ -9,10 +9,13 @@
   .logo { width: 200px; height: auto; }
   nav { background-color: #333; color: white; padding: 10px; text-align: center; }
   nav a { color: white; margin: 0 15px; text-decoration: none; }
-  section { padding: 40px; }
-  .gallery { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-  .gallery img { width: 30%; height: auto; }
-  .contact { text-align: center; }
+  section { padding: 40px; text-align: center; }
+  .carousel { position: relative; width: 100%; max-width: 800px; margin: auto; overflow: hidden; }
+  .carousel-image { display: none; width: 100%; height: auto; }
+  .carousel-image.active { display: block; }
+  .carousel .prev, .carousel .next { position: absolute; top: 50%; transform: translateY(-50%); background-color: rgba(0,0,0,0.5); color: white; border: none; padding: 10px; cursor: pointer; border-radius: 50%; }
+  .carousel .prev { left: 10px; }
+  .carousel .next { right: 10px; }
   .contact a { display: inline-block; margin: 10px; padding: 10px 20px; background-color: #333; color: white; border-radius: 5px; text-decoration: none; }
   form { max-width: 500px; margin: 0 auto; text-align: left; }
   form input, form textarea { width: 100%; padding: 10px; margin-bottom: 10px; }
@@ -21,18 +24,20 @@
 </head>
 <body>
 <header>
-  <!-- Replace src with the logo image URL from Instagram if available -->
+  <!-- Replace src with your logo image URL -->
   <img class="logo" src="https://via.placeholder.com/200" alt="Distinct Hardwood Flooring Logo">
   <h1>Distinct Hardwood Flooring</h1>
-  <p>Residential, Commercial, Gymnasiums &amp; More<br>Custom Installations, Sanding &amp; Finishing</p>
+  <p>Residential, Commercial, Gymnasiums & More<br>Custom Installations, Sanding & Finishing</p>
 </header>
 <section>
   <h2>Gallery</h2>
-  <div class="gallery">
-    <!-- Replace src attributes with image URLs from Instagram -->
-    <img src="https://via.placeholder.com/400x300" alt="Project photo 1">
-    <img src="https://via.placeholder.com/400x300" alt="Project photo 2">
-    <img src="https://via.placeholder.com/400x300" alt="Project photo 3">
+  <div class="carousel">
+    <!-- Replace src attributes with direct Instagram image URLs -->
+    <img src="https://via.placeholder.com/800x400?text=Project+1" class="carousel-image active" alt="Project photo 1">
+    <img src="https://via.placeholder.com/800x400?text=Project+2" class="carousel-image" alt="Project photo 2">
+    <img src="https://via.placeholder.com/800x400?text=Project+3" class="carousel-image" alt="Project photo 3">
+    <button class="prev">&#8249;</button>
+    <button class="next">&#8250;</button>
   </div>
 </section>
 <section class="contact">
@@ -57,5 +62,23 @@
 <footer style="text-align:center; padding:20px; background-color:#f5f5f5;">
   <p>&copy; 2025 Distinct Hardwood Flooring</p>
 </footer>
+<script>
+let carouselIndex = 0;
+const images = document.querySelectorAll('.carousel-image');
+const totalImages = images.length;
+function showImage(index) {
+  images.forEach((img, i) => {
+    img.classList.toggle('active', i === index);
+  });
+}
+document.querySelector('.carousel .next').addEventListener('click', () => {
+  carouselIndex = (carouselIndex + 1) % totalImages;
+  showImage(carouselIndex);
+});
+document.querySelector('.carousel .prev').addEventListener('click', () => {
+  carouselIndex = (carouselIndex - 1 + totalImages) % totalImages;
+  showImage(carouselIndex);
+});
+</script>
 </body>
 </html>
