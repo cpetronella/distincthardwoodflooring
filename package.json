@@ -9,7 +9,7 @@
     "install:ci": "bash scripts/install-ci.sh",
     "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vite",
     "build": "bash scripts/build-verified.sh",
-    "deploy": "npx wrangler d1 migrations apply DB --remote && npx wrangler deploy",
+    "deploy": "node scripts/prepare-cloudflare-config.mjs && npx wrangler d1 migrations apply DB --remote --config wrangler.generated.jsonc && npx wrangler deploy --config wrangler.generated.jsonc",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
     "test": "npm run build && node --test tests/rendered-html.test.mjs",
     "validate:artifact": "bash scripts/validate-artifact.sh",
