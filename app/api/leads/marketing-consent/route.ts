@@ -1,53 +1,24 @@
-import { eq } from "drizzle-orm";
-import { hasLeadSession } from "../../../../lib/leads-auth";
-
-function normalizeEmail(value: string) {
-  return value.trim().toLowerCase();
-}
-
-function normalizePhone(value: string) {
-  const digits = value.replace(/\D/g, "");
-  return digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
-}
-
-export async function PATCH(request: Request) {
-  if (!(await hasLeadSession())) {
-    return Response.json({ error: "Sign in required." }, { status: 401 });
-  }
-
+import {getLeadSession} from "../../../../lib/leads-auth";
+import {smallJson} from "../../../../lib/request-security";
+import {audit,normalizeContact} from "../../../../lib/retention";
+export async function PATCH(request:Request) {
+  const user=await getLeadSession();
+  if(!user)return Response.json({error:"Sign in required."},{status:401});
   try {
-    const payload = (await request.json()) as { id?: unknown; channel?: unknown };
-    const id = typeof payload.id === "number" ? payload.id : Number(payload.id);
-    const channel = typeof payload.channel === "string" ? payload.channel : "";
-    if (!Number.isSafeInteger(id) || id < 1 || (channel !== "email" && channel !== "phone")) {
-      return Response.json({ error: "Invalid marketing preference update." }, { status: 400 });
-    }
-
-    const [{ getDb }, { estimates, marketingSuppressions }] = await Promise.all([
-      import("../../../../db"),
-      import("../../../../db/schema"),
+    const p=await smallJson(request),id=Number(p.id),channel=p.channel;
+    if(!Number.isSafeInteger(id)||id<1||!["email","phone"].includes(String(channel)))return Response.json({error:"Invalid preference."},{status:400});
+    const {rawDb}=await import("../../../../lib/raw-db"); const db=rawDb();
+    const lead=await db.prepare("SELECT email,phone FROM estimates WHERE id=?").bind(id).first<{email:string;phone:string}>();
+    if(!lead)return Response.json({error:"Contact not found."},{status:404});
+    const contact=normalizeContact(String(channel),channel==="email"?lead.email:lead.phone),now=new Date().toISOString();
+    const column=channel==="email"?"email":"phone";
+    const matches=await db.prepare(`SELECT id,${column} AS contact FROM estimates`).all<{id:number;contact:string}>();
+    const ids=matches.results.filter(row=>normalizeContact(String(channel),row.contact)===contact).map(row=>row.id);
+    await db.batch([
+      db.prepare("INSERT INTO marketing_suppressions(channel,contact,opted_out_at,source) VALUES (?,?,?,'dashboard') ON CONFLICT(channel,contact) DO NOTHING").bind(channel,contact,now),
+      ...ids.map(matchId=>db.prepare(`UPDATE estimates SET ${column}_marketing_consent=0,${column}_marketing_opted_out_at=? WHERE id=?`).bind(now,matchId)),
+      ...ids.map(matchId=>audit(db,matchId,user.id,channel==="email"?"email_unsubscribe":"sms_opt_out")),
     ]);
-    const db = getDb();
-    const optedOutAt = new Date().toISOString();
-    const [lead] = await db.select({ email: estimates.email, phone: estimates.phone }).from(estimates).where(eq(estimates.id, id)).limit(1);
-    if (!lead) return Response.json({ error: "Contact not found." }, { status: 404 });
-
-    if (channel === "email") {
-      await db.insert(marketingSuppressions).values({ channel, contact: normalizeEmail(lead.email), optedOutAt, source: "dashboard" }).onConflictDoUpdate({
-        target: [marketingSuppressions.channel, marketingSuppressions.contact],
-        set: { optedOutAt, source: "dashboard" },
-      });
-      await db.update(estimates).set({ emailMarketingConsent: false, emailMarketingOptedOutAt: optedOutAt }).where(eq(estimates.id, id));
-    } else {
-      await db.insert(marketingSuppressions).values({ channel, contact: normalizePhone(lead.phone), optedOutAt, source: "dashboard" }).onConflictDoUpdate({
-        target: [marketingSuppressions.channel, marketingSuppressions.contact],
-        set: { optedOutAt, source: "dashboard" },
-      });
-      await db.update(estimates).set({ phoneMarketingConsent: false, phoneMarketingOptedOutAt: optedOutAt }).where(eq(estimates.id, id));
-    }
-
-    return Response.json({ ok: true, optedOutAt });
-  } catch {
-    return Response.json({ error: "Unable to update this marketing preference." }, { status: 500 });
-  }
+    return Response.json({ok:true,optedOutAt:now});
+  }catch{return Response.json({error:"Unable to save preference."},{status:500});}
 }

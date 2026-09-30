@@ -15,7 +15,7 @@ export default async function LeadSignInPage() {
       <h1 id="lead-sign-in-title">Lead inbox</h1>
       <p>Private access for Distinct Hardwood Flooring, Inc. Sign in with your individual dashboard account.</p>
       <SignInForm />
-      <Link className="dashboard-return-link" href="/leads/setup">First time? Set up the two dashboard accounts.</Link>
+      <p>Use your existing account. Contact the site administrator if you need access restored.</p>
     </section>
   </main>;
 }

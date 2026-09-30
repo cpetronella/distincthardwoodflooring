@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { createLeadSession, findDashboardUser, leadSessionCookie, normalizeUsername, verifyPassword } from "../../../../lib/leads-auth";
+import { smallJson } from "../../../../lib/request-security";
 
 async function throttleKey(request: Request, username: string) {
   const clientAddress = request.headers.get("cf-connecting-ip") ?? "unknown";
@@ -11,10 +12,11 @@ async function throttleKey(request: Request, username: string) {
 
 export async function POST(request: Request) {
   try {
-    const payload = (await request.json()) as { username?: unknown; password?: unknown };
+    const payload = await smallJson(request);
     const username = typeof payload.username === "string" ? normalizeUsername(payload.username) : "";
     const password = typeof payload.password === "string" ? payload.password : "";
-    const [{ getDb }, { dashboardLoginThrottles }] = await Promise.all([import("../../../../db"), import("../../../../db/schema")]);
+    if(username.length>120||password.length>256)return NextResponse.json({error:"Invalid sign-in request."},{status:400});
+    const [{ getDb }, { dashboardLoginThrottles, dashboardUsers }] = await Promise.all([import("../../../../db"), import("../../../../db/schema")]);
     const db = getDb();
     const key = await throttleKey(request, username);
     const now = new Date();
@@ -27,12 +29,13 @@ export async function POST(request: Request) {
     const user = username ? await findDashboardUser(username) : null;
     if (user && await verifyPassword(password, user.passwordSalt, user.passwordHash)) {
       await db.delete(dashboardLoginThrottles).where(eq(dashboardLoginThrottles.key, key));
+      await db.update(dashboardUsers).set({ previousLoginAt: user.lastLoginAt, lastLoginAt: nowIso }).where(eq(dashboardUsers.id, user.id));
       const response = NextResponse.json({ ok: true });
       response.cookies.set(leadSessionCookie.name, await createLeadSession(user), leadSessionCookie.options);
       return response;
     }
 
-    const previousAttempts = throttle && (!throttle.lockedUntil || new Date(throttle.lockedUntil) <= now) ? throttle.attempts : 0;
+    const previousAttempts = throttle && !throttle.lockedUntil && now.valueOf()-new Date(throttle.updatedAt).valueOf()<15*60*1000 ? throttle.attempts : 0;
     const attempts = previousAttempts + 1;
     const lockedUntil = attempts >= 5 ? new Date(now.valueOf() + 15 * 60 * 1000).toISOString() : "";
     await db.insert(dashboardLoginThrottles).values({ key, attempts, lockedUntil, updatedAt: nowIso }).onConflictDoUpdate({

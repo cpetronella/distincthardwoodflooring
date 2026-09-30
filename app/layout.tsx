@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
+import { AnalyticsChoice } from './analytics-choice';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,13 +16,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Distinct Hardwood Flooring | Custom Floors Since 1993",
   description:
-    "Custom hardwood flooring installation, sanding, refinishing, and gymnasium floors in New York. Request a free estimate.",
-  other: {
-    "codex-preview": "development",
-  },
+    "Custom hardwood flooring installation, sanding, refinishing, and gymnasium floors in New York, New Jersey, and Connecticut. Request a free estimate.",
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
+    icon: [{ url: "/favicon.jpg", type: "image/jpeg", sizes: "256x256" }],
+    shortcut: "/favicon.jpg",
   },
 };
 
@@ -41,17 +38,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-ZLD0HX8W00"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', 'G-ZLD0HX8W00');`}
-        </Script>
         {children}
+        <AnalyticsChoice />
       </body>
     </html>
   );

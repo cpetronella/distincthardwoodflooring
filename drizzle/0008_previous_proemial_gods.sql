@@ -1,0 +1,1 @@
+ALTER TABLE `estimates` ADD `archived_at` text DEFAULT '' NOT NULL;

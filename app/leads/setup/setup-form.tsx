@@ -60,7 +60,7 @@ export function SetupForm() {
       <label htmlFor="second-password-confirm">Confirm password</label><input id="second-password-confirm" name="secondPasswordConfirm" type="password" autoComplete="new-password" minLength={14} required />
     </fieldset>
 
-    <p className="leads-security-note">Use different usernames or email addresses and unique passwords with at least 14 characters. A long passphrase is a great choice. Both accounts will have the same access.</p>
+    <p className="leads-security-note">Use different usernames or email addresses and unique passwords with at least 14 characters. A long passphrase is a great choice.</p>
     <button type="submit" className="leads-primary-button" disabled={sending}>{sending ? "Creating accounts…" : "Create both accounts"}</button>
     <p className="leads-form-message" aria-live="polite">{error}</p>
   </form>;
