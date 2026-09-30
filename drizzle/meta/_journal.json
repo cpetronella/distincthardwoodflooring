@@ -50,6 +50,41 @@
       "when": 1788301468912,
       "tag": "0006_overrated_xavin",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1790129365843,
+      "tag": "0007_demonic_genesis",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1790183341757,
+      "tag": "0008_previous_proemial_gods",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1790187431463,
+      "tag": "0009_majestic_wild_pack",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1790190013718,
+      "tag": "0010_chemical_smasher",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1790190360671,
+      "tag": "0011_outstanding_bloodstorm",
+      "breakpoints": true
     }
   ]
 }

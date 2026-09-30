@@ -1,0 +1,2 @@
+# Generate independently for this deployment. Never commit the real value.
+LEADS_SESSION_SECRET=

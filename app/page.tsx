@@ -1,11 +1,24 @@
 "use client";
 
-import { FormEvent, KeyboardEvent, PointerEvent, useEffect, useRef, useState } from "react";
+import { FocusEvent, FormEvent, KeyboardEvent, PointerEvent, useEffect, useRef, useState } from "react";
 import { Building2, CheckCircle2, Hammer, Paintbrush, Trophy } from "lucide-react";
-import { emailMarketingDisclosure, marketingCertification, textMarketingDisclosure } from "../lib/marketing-consent";
+import { emailMarketingDisclosure, textMarketingDisclosure } from "../lib/marketing-consent";
+import { trackEstimateSuccess } from "../lib/analytics";
+import { titleCase } from "../lib/title-case";
+import { formatPhone } from "../lib/phone";
 
 const instagram = "https://www.instagram.com/jerrydistinct/";
-const states = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"];
+const states = [["NY", "New York"], ["NJ", "New Jersey"], ["CT", "Connecticut"]];
+const capitalizeField = (event: FocusEvent<HTMLInputElement>) => { event.currentTarget.value = titleCase(event.currentTarget.value); };
+const formatPhoneField = (event: FocusEvent<HTMLInputElement>) => { event.currentTarget.value = formatPhone(event.currentTarget.value); };
+
+function zipMatchesState(zip: string, state: string) {
+  const prefix = Number(zip.slice(0, 3));
+  if (state === "NY") return prefix === 5 || prefix === 63 || (prefix >= 100 && prefix <= 149);
+  if (state === "NJ") return prefix >= 70 && prefix <= 89;
+  if (state === "CT") return prefix >= 60 && prefix <= 69;
+  return false;
+}
 
 const projects = [
   {
@@ -46,8 +59,10 @@ const serviceIcons = [Hammer, Paintbrush, Building2, Trophy];
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [formStatus, setFormStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [customerType, setCustomerType] = useState("");
+  const [customerTypeOther, setCustomerTypeOther] = useState("");
   const [successModalOpen, setSuccessModalOpen] = useState(false);
-  const [billingMatchesService, setBillingMatchesService] = useState(true);
+  const submissionPending = useRef(false);
   const [activeProject, setActiveProject] = useState(0);
   const [carouselPaused, setCarouselPaused] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
@@ -88,8 +103,27 @@ export default function Home() {
 
   async function submitEstimate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setFormStatus("sending");
+    if (submissionPending.current) return;
     const form = event.currentTarget;
+    for (const field of ["firstName", "lastName", "address", "city"]) {
+      const input = form.elements.namedItem(field) as HTMLInputElement;
+      input.value = titleCase(input.value);
+    }
+    const phoneInput = form.elements.namedItem("phone") as HTMLInputElement;
+    phoneInput.value = formatPhone(phoneInput.value);
+    phoneInput.setCustomValidity(/^\d{10}$/.test(phoneInput.value.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "")) ? "" : "Enter a 10-digit phone number.");
+    const formData = new FormData(form);
+    const addressInput = form.elements.namedItem("address") as HTMLInputElement;
+    const cityInput = form.elements.namedItem("city") as HTMLInputElement;
+    const zipInput = form.elements.namedItem("zipCode") as HTMLInputElement;
+    const state = String(formData.get("state") || "");
+    const zip = String(formData.get("zipCode") || "");
+    addressInput.setCustomValidity(/^\s*\d+[A-Za-z]?\s+\S+/.test(addressInput.value) ? "" : "Enter a complete street address, including the street number.");
+    cityInput.setCustomValidity(/^[A-Za-z][A-Za-z .'-]{1,99}$/.test(cityInput.value.trim()) ? "" : "Enter a valid city name.");
+    zipInput.setCustomValidity(zipMatchesState(zip, state) ? "" : "Enter a ZIP code that matches the selected state.");
+    if (!form.reportValidity()) return;
+    submissionPending.current = true;
+    setFormStatus("sending");
 
     try {
       const response = await fetch("/api/estimates", {
@@ -97,13 +131,17 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(Object.fromEntries(new FormData(form).entries())),
       });
-      if (!response.ok) throw new Error("Unable to submit estimate");
+      if (!response.ok || !(await response.json() as {ok?: boolean}).ok) throw new Error("Unable to submit estimate");
+      trackEstimateSuccess();
       form.reset();
-      setBillingMatchesService(true);
+      setCustomerType("");
+      setCustomerTypeOther("");
       setFormStatus("success");
       setSuccessModalOpen(true);
     } catch {
       setFormStatus("error");
+    } finally {
+      submissionPending.current = false;
     }
   }
 
@@ -211,10 +249,10 @@ export default function Home() {
       <section className="quote-hero" id="estimate" aria-labelledby="hero-title">
         <div className="quote-hero-image" role="img" aria-label="A sunlit room with newly finished white oak hardwood floors" />
         <div className="quote-card">
-          <h1 id="hero-title">Beautiful floors.<br />Built to last.</h1>
+          <h1 id="hero-title">Just Say NO to Rugs!</h1>
           <p className="quote-copy">Premium hardwood flooring, professionally installed with precision and care.</p>
           <div className="quote-rule" />
-          <p className="form-kicker">Tell us about your project</p>
+          <p className="form-kicker">Request a free estimate</p>
           {formStatus === "success" ? (
             <div className="estimate-success-panel" ref={successPanel} tabIndex={-1} aria-labelledby="estimate-success-title">
               <CheckCircle2 aria-hidden="true" />
@@ -225,23 +263,23 @@ export default function Home() {
                 <button className="button button-olive" type="button" onClick={startAnotherEstimate}>Submit another request</button>
               </div>
             </div>
-          ) : <form className="estimate-form top-estimate-form" onSubmit={submitEstimate}>
-            <div className="form-grid"><label><span>First name *</span><input name="firstName" autoComplete="given-name" required /></label><label><span>Last name *</span><input name="lastName" autoComplete="family-name" required /></label><label><span>Phone *</span><input name="phone" type="tel" inputMode="tel" autoComplete="tel" required /></label><label><span>Email *</span><input name="email" type="email" inputMode="email" autoComplete="email" required /></label><label className="full-width"><span>Service street address *</span><input name="address" autoComplete="shipping address-line1" required /></label><fieldset className="location-grid full-width"><legend>Service location *</legend><label><span>City *</span><input name="city" autoComplete="shipping address-level2" required /></label><label><span>State *</span><select name="state" autoComplete="shipping address-level1" defaultValue="" required><option value="" disabled>Select</option>{states.map((state) => <option key={state} value={state}>{state}</option>)}</select></label><label><span>ZIP *</span><input name="zipCode" autoComplete="shipping postal-code" inputMode="numeric" pattern="[0-9]{5}(-[0-9]{4})?" title="Use a 5-digit ZIP code or ZIP+4" required /></label></fieldset></div>
-            <label className="consent address-match"><input name="billingMatchesService" type="checkbox" value="yes" checked={billingMatchesService} onChange={(event) => setBillingMatchesService(event.target.checked)} /><span>Billing address is the same as the service address.</span></label>
-            {!billingMatchesService && <fieldset className="billing-fields"><legend>Billing address</legend><label><span>Street address *</span><input name="billingAddress" autoComplete="billing address-line1" required /></label><div className="location-grid"><label><span>City *</span><input name="billingCity" autoComplete="billing address-level2" required /></label><label><span>State *</span><select name="billingState" autoComplete="billing address-level1" defaultValue="" required><option value="" disabled>Select</option>{states.map((state) => <option key={state} value={state}>{state}</option>)}</select></label><label><span>ZIP *</span><input name="billingZipCode" autoComplete="billing postal-code" inputMode="numeric" pattern="[0-9]{5}(-[0-9]{4})?" title="Use a 5-digit ZIP code or ZIP+4" required /></label></div></fieldset>}
+          ) : <form className="estimate-form top-estimate-form" onSubmit={submitEstimate} autoComplete="on">
+            <div className="form-grid"><label><span>First name *</span><input name="firstName" autoComplete="given-name" onBlur={capitalizeField} required /></label><label><span>Last name *</span><input name="lastName" autoComplete="family-name" onBlur={capitalizeField} required /></label><label><span>Phone *</span><input name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="(555) 123-4567" onBlur={formatPhoneField} onInput={event=>event.currentTarget.setCustomValidity("")} required /></label><label><span>Email *</span><input name="email" type="email" inputMode="email" autoComplete="email" required /></label><label className="full-width"><span>Service street address *</span><input name="address" autoComplete="shipping address-line1" maxLength={240} placeholder="Street number and street name" required onBlur={capitalizeField} onInput={event=>event.currentTarget.setCustomValidity("")} /></label><fieldset className="location-grid full-width"><legend>Service location *</legend><label><span>City *</span><input name="city" autoComplete="shipping address-level2" maxLength={100} required onBlur={capitalizeField} onInput={event=>event.currentTarget.setCustomValidity("")} /></label><label><span>State (NY, NJ or CT) *</span><select name="state" autoComplete="shipping address-level1" defaultValue="" required onChange={event=>{const form=event.currentTarget.form;const zip=form?.elements.namedItem("zipCode") as HTMLInputElement|null;zip?.setCustomValidity("")}}><option value="" disabled>Select</option>{states.map(([code, name]) => <option key={code} value={code}>{name}</option>)}</select></label><label><span>ZIP *</span><input name="zipCode" autoComplete="shipping postal-code" inputMode="numeric" maxLength={10} pattern="[0-9]{5}(-[0-9]{4})?" title="Use a 5-digit ZIP code or ZIP+4" required onInput={event=>event.currentTarget.setCustomValidity("")} /></label></fieldset></div>
             <label><span>Project type (optional)</span><select name="service" defaultValue=""><option value="" disabled>Select the closest fit</option><option>New hardwood installation</option><option>Sanding and refinishing</option><option>Gymnasium flooring</option><option>Commercial flooring</option><option>Not sure yet</option></select></label>
-            <label className="consent"><input name="consent" type="checkbox" value="yes" required /><span>I agree to be contacted by call, text, or email about this estimate.</span></label>
+            {customerType === "other" ? <div className="other-description-field"><input type="hidden" name="customerType" value="other" /><label><span>Please describe your role *</span><textarea name="customerTypeOther" value={customerTypeOther} onChange={event=>setCustomerTypeOther(event.target.value)} maxLength={500} rows={5} placeholder="Tell us how you are connected to this project" required aria-describedby="other-description-limit" /></label><span id="other-description-limit" className="project-description-limit">Up to 500 characters.</span><button type="button" className="other-role-back" onClick={()=>{setCustomerType("");setCustomerTypeOther("")}}>Choose a different option</button></div> : <label><span>You are *</span><select name="customerType" value={customerType} onChange={event=>setCustomerType(event.target.value)} required><option value="" disabled>Select one</option><option value="homeowner">Homeowner</option><option value="contractor">Contractor</option><option value="other">Other</option></select></label>}
+            <label><span>Tell us about your project (optional)</span><textarea name="details" maxLength={500} rows={4} placeholder="For example, the rooms or flooring work you have in mind" aria-describedby="project-description-limit" /></label>
+            <p id="project-description-limit" className="project-description-limit">Up to 500 characters.</p>
             <fieldset className="marketing-consent-group">
-              <legend>Keep in touch <span>(optional)</span></legend>
-              <p>Choose either option, both, or neither. Your choices will not affect your estimate request or your ability to purchase services.</p>
-              <label className="consent"><input name="emailMarketingConsent" type="checkbox" value="yes" /><span>{emailMarketingDisclosure}</span></label>
-              <label className="consent"><input name="phoneMarketingConsent" type="checkbox" value="yes" /><span>{textMarketingDisclosure}</span></label>
+              <legend>Optional offers</legend>
+              <p>These choices do not affect your estimate.</p>
+              <label className="consent consent-option"><input name="emailMarketingConsent" type="checkbox" value="yes" /><span><strong>Email offers</strong><small>{emailMarketingDisclosure}</small></span></label>
+              <label className="consent consent-option"><input name="phoneMarketingConsent" type="checkbox" value="yes" /><span><strong>Text offers</strong><small>{textMarketingDisclosure}</small></span></label>
               <p className="sms-consent-links"><a href="/terms">Marketing Communications Terms</a><span aria-hidden="true">·</span><a href="/privacy">Privacy Notice</a></p>
             </fieldset>
-            <p className="privacy-note">We use your information to respond to your request and, only if selected above, send promotions through your chosen channels. {marketingCertification} Read our <a href="/privacy">Privacy Notice</a> and <a href="/terms">Marketing Communications Terms</a>.</p>
+            <label className="form-honeypot" aria-hidden="true">Leave this empty<input name="website" tabIndex={-1} autoComplete="off" /></label>
             <input type="hidden" name="source" value="Top estimate form" />
             <div className="quote-contact-actions"><button className="button button-olive quote-submit" type="submit" disabled={formStatus === "sending"}>{formStatus === "sending" ? "Sending…" : "Request my free estimate"}</button></div>
-            <p className="form-reassurance">After you submit, expect a call or text from Distinct Hardwood Flooring, Inc. within 24–48 business hours.</p>
+            <p className="form-reassurance">Expect a call or text within 24–48 business hours.</p>
           </form>}
           <div className="quick-form-message" aria-live="polite">{formStatus === "error" && <p>We could not send your request. Please review the form and try again.</p>}</div>
         </div>
@@ -290,7 +328,7 @@ export default function Home() {
 
       <section className="about-section" id="about" aria-labelledby="about-title">
         <div className="about-image" role="img" aria-label="A flooring professional working on a custom gymnasium court" />
-        <div className="about-content"><h2 id="about-title">Crafted by hand.<br />Built on trust.</h2><p>Distinct Hardwood Flooring, Inc. was founded in 1993 with a simple idea: do the work carefully, stand behind it, and treat every project with real attention to detail.</p><p>More than three decades later, the company remains personally invested in the work, from the first conversation through the final finish.</p><p className="about-history">Distinct Hardwood Flooring, Inc. serves residential spaces, commercial environments, and gymnasiums throughout New York.</p><a className="underlined-link" href="#estimate">Start your project <span aria-hidden="true">→</span></a></div>
+        <div className="about-content"><h2 id="about-title">Crafted by hand.<br />Built on trust.</h2><p>Distinct Hardwood Flooring, Inc. was founded in 1993 with a simple idea: do the work carefully, stand behind it, and treat every project with real attention to detail.</p><p>More than three decades later, the company remains personally invested in the work, from the first conversation through the final finish.</p><p className="about-history">Distinct Hardwood Flooring, Inc. serves homes, businesses, and gymnasiums in New York, New Jersey, and Connecticut.</p><a className="underlined-link" href="#estimate">Start your project <span aria-hidden="true">→</span></a></div>
       </section>
 
       <section className="next-steps-section" aria-labelledby="next-steps-title">
@@ -298,7 +336,7 @@ export default function Home() {
         <div className="next-steps"><article><h3>We review your project</h3><p>We look over your details and make sure we understand what you need.</p></article><article><h3>We confirm your visit</h3><p>We will contact you to confirm the best time and way to connect.</p></article><article><h3>You get a tailored estimate</h3><p>You will receive clear guidance based on your project, space, and goals.</p></article></div>
       </section>
 
-      <footer><img src="/distinct-logo.jpg" alt="Distinct Hardwood Flooring" /><div><p>Residential · Commercial · Gymnasiums</p><a href={instagram} target="_blank" rel="noreferrer">Instagram</a><a href="/privacy">Privacy Notice</a><a href="/terms">Marketing Communications Terms</a></div><p>Serving New York<br />© {new Date().getFullYear()} Distinct Hardwood Flooring, Inc.</p></footer>
+      <footer><img src="/distinct-logo.jpg" alt="Distinct Hardwood Flooring" /><div><p>Residential · Commercial · Gymnasiums</p><a href={instagram} target="_blank" rel="noreferrer">Instagram</a><a href="/privacy">Privacy Notice</a><a href="/terms">Marketing Communications Terms</a></div><p>Serving NY · NJ · CT<br />© {new Date().getFullYear()} Distinct Hardwood Flooring, Inc.</p></footer>
       <dialog className="estimate-success-dialog" ref={successDialog} aria-labelledby="success-dialog-title" onCancel={(event) => { event.preventDefault(); closeSuccessModal(); }} onClose={() => setSuccessModalOpen(false)}>
         <div className="success-dialog-content">
           <CheckCircle2 aria-hidden="true" />

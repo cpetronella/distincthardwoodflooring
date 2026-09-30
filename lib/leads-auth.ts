@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 
 const cookieName = "distinct_leads_session";
-const sessionLifetimeSeconds = 60 * 60 * 12;
+const sessionLifetimeSeconds = 60 * 60 * 2;
 // Cloudflare Workers currently caps PBKDF2 at 100,000 iterations.
 const passwordIterations = 100_000;
 
@@ -10,8 +10,15 @@ export type DashboardUser = {
   id: number;
   username: string;
   displayName: string;
+  role: string;
   sessionVersion: number;
+  lastLoginAt: string;
+  previousLoginAt: string;
 };
+
+export function isSuperadmin(user: DashboardUser | null): boolean {
+  return user?.role === "superadmin";
+}
 
 async function requiredSecret(name: "LEADS_ACCESS_CODE" | "LEADS_SESSION_SECRET") {
   const { env } = await import("cloudflare:workers");
@@ -59,7 +66,7 @@ async function sameValue(left: string, right: string) {
 
 async function passwordDigest(password: string, salt: Uint8Array) {
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
-  return new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", salt, iterations: passwordIterations, hash: "SHA-256" }, key, 256));
+  return new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", salt: new Uint8Array(salt), iterations: passwordIterations, hash: "SHA-256" }, key, 256));
 }
 
 export function normalizeUsername(value: string) {
@@ -73,7 +80,7 @@ export function validUsername(value: string) {
 }
 
 export function validPassword(value: string, username = "") {
-  return value.length >= 14 && (!username || !value.toLowerCase().includes(username.toLowerCase()));
+  return value.length >= 14 && value.length <= 256 && (!username || !value.toLowerCase().includes(username.toLowerCase()));
 }
 
 export async function createPasswordRecord(password: string) {
@@ -114,7 +121,7 @@ export async function isCorrectLeadPasscode(passcode: string) {
 
 export async function createLeadSession(user: DashboardUser) {
   const expiresAt = Math.floor(Date.now() / 1000) + sessionLifetimeSeconds;
-  const payload = `leads.${user.id}.${user.sessionVersion}.${expiresAt}`;
+  const payload = `leads2.${user.id}.${user.sessionVersion}.${expiresAt}`;
   return `${payload}.${base64Url(await hmac(payload))}`;
 }
 
@@ -122,11 +129,12 @@ export async function getLeadSession(): Promise<DashboardUser | null> {
   const session = (await cookies()).get(cookieName)?.value;
   if (!session) return null;
 
+  if (session.split('.').length !== 5) return null;
   const [scope, idValue, versionValue, expiryValue, signature] = session.split(".");
   const id = Number(idValue);
   const sessionVersion = Number(versionValue);
   const expiresAt = Number(expiryValue);
-  if (scope !== "leads" || !Number.isSafeInteger(id) || !Number.isSafeInteger(sessionVersion) || !Number.isSafeInteger(expiresAt) || expiresAt <= Math.floor(Date.now() / 1000) || !signature) return null;
+  if (scope !== "leads2" || !Number.isSafeInteger(id) || !Number.isSafeInteger(sessionVersion) || !Number.isSafeInteger(expiresAt) || expiresAt <= Math.floor(Date.now() / 1000) || !signature) return null;
   try {
     if (!equalBytes(fromBase64Url(signature), await hmac(`${scope}.${idValue}.${versionValue}.${expiryValue}`))) return null;
   } catch {
@@ -134,13 +142,21 @@ export async function getLeadSession(): Promise<DashboardUser | null> {
   }
 
   const { db, dashboardUsers } = await dashboardSchema();
-  const [user] = await db.select({ id: dashboardUsers.id, username: dashboardUsers.username, displayName: dashboardUsers.displayName, sessionVersion: dashboardUsers.sessionVersion }).from(dashboardUsers).where(eq(dashboardUsers.id, id)).limit(1);
+  const [user] = await db.select({ id: dashboardUsers.id, username: dashboardUsers.username, displayName: dashboardUsers.displayName, role: dashboardUsers.role, sessionVersion: dashboardUsers.sessionVersion, lastLoginAt: dashboardUsers.lastLoginAt, previousLoginAt: dashboardUsers.previousLoginAt }).from(dashboardUsers).where(eq(dashboardUsers.id, id)).limit(1);
   if (!user || user.sessionVersion !== sessionVersion) return null;
   return user;
 }
 
 export async function hasLeadSession() {
   return Boolean(await getLeadSession());
+}
+
+// Pages verify the signed session before rendering the dashboard navigation.
+// Pass its absolute expiry to the browser so an open tab leaves at the same time.
+export async function getLeadSessionExpiresAt() {
+  const session = (await cookies()).get(cookieName)?.value;
+  const expiry = Number(session?.split(".")[3]);
+  return Number.isSafeInteger(expiry) ? expiry * 1000 : 0;
 }
 
 export const leadSessionCookie = {

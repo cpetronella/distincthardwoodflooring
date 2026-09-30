@@ -1,13 +1,14 @@
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { createLeadSession, createPasswordRecord, getLeadSession, leadSessionCookie, validPassword, verifyPassword } from "../../../../lib/leads-auth";
+import { smallJson } from "../../../../lib/request-security";
 
 export async function PATCH(request: Request) {
   const session = await getLeadSession();
   if (!session) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
 
   try {
-    const payload = (await request.json()) as { currentPassword?: unknown; newPassword?: unknown };
+    const payload = await smallJson(request);
     const currentPassword = typeof payload.currentPassword === "string" ? payload.currentPassword : "";
     const newPassword = typeof payload.newPassword === "string" ? payload.newPassword : "";
     if (!validPassword(newPassword, session.username)) {

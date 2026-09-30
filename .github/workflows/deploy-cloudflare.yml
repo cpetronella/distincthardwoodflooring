@@ -1,0 +1,41 @@
+name: Deploy independent Cloudflare site
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: distinct-hardwood-migration-deploy
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: cloudflare-migration
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_D1_DATABASE_ID: ${{ vars.CLOUDFLARE_D1_DATABASE_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Check deployment configuration
+        env:
+          LEADS_SESSION_SECRET: ${{ secrets.LEADS_SESSION_SECRET }}
+        run: |
+          node --input-type=module -e "for (const key of ['CLOUDFLARE_API_TOKEN','CLOUDFLARE_ACCOUNT_ID','CLOUDFLARE_D1_DATABASE_ID','LEADS_SESSION_SECRET']) if (!process.env[key]) throw new Error('Missing '+key)"
+      - run: npm ci
+      - run: node scripts/configure-deployment.mjs
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run deploy:check
+      - name: Apply database schema to the new database
+        run: npx wrangler d1 migrations apply DB --remote --config wrangler.jsonc
+      - name: Configure session signing secret
+        env:
+          LEADS_SESSION_SECRET: ${{ secrets.LEADS_SESSION_SECRET }}
+        run: node -e 'process.stdout.write(process.env.LEADS_SESSION_SECRET)' | npx wrangler secret put LEADS_SESSION_SECRET --config wrangler.jsonc
+      - name: Deploy tested build
+        run: npx wrangler deploy

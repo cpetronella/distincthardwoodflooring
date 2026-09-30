@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text, uniqueIndex, index } from "drizzle-orm/sqlite-core";
 
 export const estimates = sqliteTable("estimates", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -17,6 +17,8 @@ export const estimates = sqliteTable("estimates", {
   billingState: text("billing_state").notNull().default(""),
   billingZipCode: text("billing_zip_code").notNull().default(""),
   service: text("service").notNull().default(""),
+  customerType: text("customer_type").notNull().default(""),
+  customerTypeOther: text("customer_type_other").notNull().default(""),
   meetingType: text("meeting_type").notNull().default(""),
   preferredDate: text("preferred_date").notNull().default(""),
   preferredTime: text("preferred_time").notNull().default(""),
@@ -33,6 +35,35 @@ export const estimates = sqliteTable("estimates", {
   status: text("status").notNull().default("new"),
   estimateAmountCents: integer("estimate_amount_cents").notNull().default(0),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  lastActivityAt: text("last_activity_at").notNull().default(""),
+  classification: text("classification").notNull().default("review-required"),
+  completedAt: text("completed_at").notNull().default(""),
+  retentionCategory: text("retention_category").notNull().default("review-required"),
+  retentionDueAt: text("retention_due_at").notNull().default(""),
+  retentionHold: integer("retention_hold", { mode: "boolean" }).notNull().default(false),
+  retentionHoldReason: text("retention_hold_reason").notNull().default(""),
+  archivedAt: text("archived_at").notNull().default(""),
+}, table => [index("estimates_retention_due").on(table.retentionDueAt)]);
+
+export const auditEvents = sqliteTable("audit_events", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  leadId: integer("lead_id"),
+  actorId: integer("actor_id"),
+  action: text("action").notNull(),
+  details: text("details").notNull().default(""),
+  createdAt: text("created_at").notNull(),
+}, table => [index("audit_events_lead").on(table.leadId)]);
+
+export const maintenanceRuns = sqliteTable("maintenance_runs", {
+  day: text("day").primaryKey(),
+  completedAt: text("completed_at").notNull().default(""),
+  removed: integer("removed").notNull().default(0),
+});
+
+export const anonymousOutcomes = sqliteTable("anonymous_outcomes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  year: text("year").notNull(),
+  outcome: text("outcome").notNull(),
 });
 
 export const marketingSuppressions = sqliteTable("marketing_suppressions", {
@@ -50,9 +81,12 @@ export const dashboardUsers = sqliteTable("dashboard_users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username").notNull(),
   displayName: text("display_name").notNull(),
+  role: text("role").notNull().default("admin"),
   passwordSalt: text("password_salt").notNull(),
   passwordHash: text("password_hash").notNull(),
   sessionVersion: integer("session_version").notNull().default(1),
+  lastLoginAt: text("last_login_at").notNull().default(""),
+  previousLoginAt: text("previous_login_at").notNull().default(""),
   passwordUpdatedAt: text("password_updated_at").notNull(),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [

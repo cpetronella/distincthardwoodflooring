@@ -1,47 +1,29 @@
 /** Cloudflare Worker entry point for the vinext-starter template. */
-import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
-
-interface Env {
-  ASSETS: Fetcher;
-  DB: D1Database;
-  IMAGES: {
-    input(stream: ReadableStream): {
-      transform(options: Record<string, unknown>): {
-        output(options: { format: string; quality: number }): Promise<{ response(): Response }>;
-      };
-    };
-  };
-}
-
-interface ExecutionContext {
-  waitUntil(promise: Promise<unknown>): void;
-  passThroughOnException(): void;
-}
-
-// Image security config. SVG sources with .svg extension auto-skip the
-// optimization endpoint on the client side (served directly, no proxy).
-// To route SVGs through the optimizer (with security headers), set
-// dangerouslyAllowSVG: true in next.config.js and uncomment below:
-// const imageConfig: ImageConfig = { dangerouslyAllowSVG: true };
+import { mutationAllowed } from "../lib/request-security";
+import { cleanupExpired } from "../lib/retention";
 
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+    if (!["GET","HEAD","OPTIONS"].includes(request.method) && !mutationAllowed(request)) return new Response("Request rejected", {status:403});
+    if (url.pathname.startsWith('/api/') && Number(request.headers.get('content-length') || 0)>16000) return new Response("Request too large", {status:413});
+    if (env.DB && url.pathname === "/" && request.method === "GET") ctx.waitUntil(cleanupExpired(env.DB).catch(() => { console.error("Retention cleanup failed"); }));
 
-    if (url.pathname === "/_vinext/image") {
-      const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
-      return handleImageOptimization(request, {
-        fetchAsset: (path) => env.ASSETS.fetch(new Request(new URL(path, request.url))),
-        transformImage: async (body, { width, format, quality }) => {
-          const result = await env.IMAGES.input(body).transform(width > 0 ? { width } : {}).output({ format, quality });
-          return result.response();
-        },
-      }, allowedWidths);
+    const result = await handler.fetch(request, env, ctx);
+    const response = new Response(result.body,result);
+    response.headers.set('X-Content-Type-Options','nosniff');
+    response.headers.set('Referrer-Policy','no-referrer');
+    response.headers.set('Permissions-Policy','camera=(), microphone=(), geolocation=()');
+    response.headers.set('Content-Security-Policy',"object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'");
+    if (url.pathname.startsWith('/leads') || url.pathname.startsWith('/api/')) {
+      response.headers.set('Cache-Control','private, no-store, max-age=0');
+      response.headers.set('X-Robots-Tag','noindex, nofollow, noarchive');
     }
-
-    return handler.fetch(request, env, ctx);
+    if (url.hostname.endsWith(".workers.dev")) response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+    return response;
   },
+  async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) { ctx.waitUntil(cleanupExpired(env.DB)); },
 };
 
 export default worker;

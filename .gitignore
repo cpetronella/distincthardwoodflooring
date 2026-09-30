@@ -35,8 +35,16 @@ yarn-error.log*
 
 # typescript
 next-env.d.ts
+*.tsbuildinfo
 /dist/
 /.wrangler/
 /.sites-runtime/
 /outputs/
 /work/
+
+.dev.vars*
+!.dev.vars.example
+/migration-private/
+/wrangler.generated.jsonc
+
+/worker-configuration.d.ts

@@ -21,7 +21,7 @@ const runtimeContext = {
   passThroughOnException() {},
 };
 
-test("renders development preview metadata", async () => {
+test("does not render Sites development metadata", async () => {
   const worker = await loadWorker();
 
   const response = await worker.fetch(
@@ -37,7 +37,7 @@ test("renders development preview metadata", async () => {
     response.headers.get("content-type") ?? "",
     /^text\/html\b/i,
   );
-  assert.match(await response.text(), developmentPreviewMeta);
+  assert.doesNotMatch(await response.text(), developmentPreviewMeta);
 });
 
 test("renders separate optional email and text marketing permissions", async () => {
@@ -49,11 +49,12 @@ test("renders separate optional email and text marketing permissions", async () 
   assert.match(html, /name=["']emailMarketingConsent["']/i);
   assert.match(html, /name=["']phoneMarketingConsent["']/i);
   assert.doesNotMatch(html, /<input(?=[^>]*name=["'](?:emailMarketingConsent|phoneMarketingConsent)["'])[^>]*\bchecked\b/i);
-  assert.match(html, /Your choices will not affect your estimate request or your ability to purchase services/i);
-  assert.match(html, /electronically sign/i);
-  assert.match(html, /Reply STOP to opt out or HELP for help/i);
+  assert.match(html, /These choices do not affect your estimate/i);
+  assert.match(html, /I agree to receive promotional texts/i);
+  assert.match(html, /No promotional texts are sent yet/i);
   assert.match(html, /Marketing Communications Terms/i);
-  assert.match(html, /at least 18 years old/i);
+  assert.match(html, /State \(NY, NJ or CT\)/i);
+  assert.doesNotMatch(html, /<option value="CA">/i);
 });
 
 test("customer landing page routes visitors to the estimate form", async () => {
@@ -64,7 +65,7 @@ test("customer landing page routes visitors to the estimate form", async () => {
   assert.equal(response.status, 200);
   assert.match(html, /Request my free estimate/i);
   assert.doesNotMatch(html, /tel:\+?19178870192/i);
-  assert.doesNotMatch(html, /Call \(917\) 887-0192/i);
+  assert.match(html, /Privacy Notice/i);
 });
 
 test("privacy notice explains marketing choices and opt out", async () => {
@@ -74,9 +75,11 @@ test("privacy notice explains marketing choices and opt out", async () => {
 
   assert.equal(response.status, 200);
   assert.match(html, /Marketing permission is optional/i);
-  assert.match(html, /replying STOP/i);
-  assert.match(html, /does not sell or rent/i);
-  assert.match(html, /limited suppression record/i);
+  assert.match(html, /not currently sending promotional email or text campaigns/i);
+  assert.match(html, /set up opt-out handling before sending any/i);
+  assert.match(html, /do not sell or rent/i);
+  assert.match(html, /limited email or phone information to honor marketing opt-outs/i);
+  assert.match(html, /New York, New Jersey, and Connecticut/i);
 });
 
 test("marketing communications terms disclose email, text, opt-out, and no-sale practices", async () => {
@@ -86,18 +89,18 @@ test("marketing communications terms disclose email, text, opt-out, and no-sale 
 
   assert.equal(response.status, 200);
   assert.match(html, /Email marketing/i);
-  assert.match(html, /prior express written consent/i);
-  assert.match(html, /not required as a condition/i);
-  assert.match(html, /Message frequency varies/i);
+  assert.match(html, /electronic agreement/i);
+  assert.match(html, /not required for an estimate or purchase/i);
+  assert.match(html, /frequency varies/i);
   assert.match(html, /Message and data rates may apply/i);
-  assert.match(html, /Reply.*STOP.*opt out/is);
-  assert.match(html, /Reply.*HELP.*assistance/is);
-  assert.match(html, /does not sell or rent/i);
-  assert.match(html, /No subscription or automatic renewal/i);
+  assert.match(html, /STOP, QUIT, END, CANCEL, UNSUBSCRIBE, OPT OUT/i);
+  assert.match(html, /HELP support/i);
+  assert.match(html, /do not sell or rent/i);
+  assert.match(html, /not a paid subscription or automatic-renewal/i);
   assert.match(html, /Privacy Notice/i);
 });
 
-test("dashboard sign-in uses individual account credentials and offers private setup", async () => {
+test("dashboard sign-in uses individual accounts without reopening setup", async () => {
   const worker = await loadWorker();
   const response = await worker.fetch(new Request("http://localhost/leads/sign-in", { headers: { accept: "text/html" } }), runtimeEnv, runtimeContext);
   const html = await response.text();
@@ -105,7 +108,8 @@ test("dashboard sign-in uses individual account credentials and offers private s
   assert.equal(response.status, 200);
   assert.match(html, /name=["']username["']/i);
   assert.match(html, /name=["']password["']/i);
-  assert.match(html, /First time\? Set up the two dashboard accounts/i);
+  assert.match(html, /Use your existing account/i);
+  assert.doesNotMatch(html, /href="\/leads\/setup"/i);
   assert.match(html, /Distinct Hardwood Flooring/i);
 });
 
